@@ -3,11 +3,11 @@
 	"version": "1.0.0",
 	"main": "updateThumbnails.js",
 	"scripts": {
-	  "update": "node updateThumbnails.js"
+		"update": "node updateThumbnails.js"
 	},
 	"dependencies": {
-	  "node-fetch": "^2.6.7",
-	  "sharp": "^0.32.1"
+		"canvas": "^3.1.0",
+		"node-fetch": "^3.3.2",
+		"sharp": "^0.34.0"
 	}
-  }
-  
+}
