@@ -11,6 +11,7 @@ const LEVELS_CARDS_DIR = path.join(__dirname, 'levels', 'cards');
 const PACKS_DIR = path.join(__dirname, 'packs');
 const CARD_HEIGHT = 200; 
 const SLEEP_TIME = 200;
+const PACK_DEZOOM = 0.45;
 
 function sleep(ms) {
 	return new Promise(resolve => setTimeout(resolve, ms));
@@ -81,11 +82,6 @@ function sleep(ms) {
         }
         
         const packPath = path.join(PACKS_DIR, `${pack.id}.png`);
-        if (fs.existsSync(packPath)) {
-          console.log(`Pack ${pack.id} already processed, skipping.`);
-          continue;
-        }
-        
         console.log(`Processing pack ${pack.id}...`);
         pack.levels.sort((a, b) => a.position - b.position);
         
@@ -153,39 +149,53 @@ function sleep(ms) {
             console.warn(`Failed to load thumbnail for level ${level.level_id} in pack ${pack.id}:`, error);
             continue;
           }
-          
-          const startX = i * thumbnailWidth;
-          const endX = startX + thumbnailWidth;
-          const startY = 0;
-          const endY = rowHeight;
+
+          const destXstart = i * thumbnailWidth;
+          const destXend = destXstart + thumbnailWidth;
+          const destYstart = 0;
+          const destYend = rowHeight;
+
+          const destWidth = thumbnailWidth + rowHeight;
+          const destHeight = destWidth * (img.height / img.width);
+
+          const srcWidth = destWidth / PACK_DEZOOM;
+          const srcHeight = destHeight / PACK_DEZOOM;
+
+          const srcXstart = (img.width - srcWidth) / 2;  
+          const srcYstart = (img.height - srcHeight) / 2;
           
           ctx.save();
           ctx.beginPath();
-          ctx.moveTo(startX + rowHeight, startY);
-          ctx.lineTo(endX + rowHeight, startY);
-          ctx.lineTo(endX, endY);
-          ctx.lineTo(startX, endY);
+          ctx.moveTo(destXstart + rowHeight, destYstart);
+          ctx.lineTo(destXend + rowHeight, destYstart);
+          ctx.lineTo(destXend, destYend);
+          ctx.lineTo(destXstart, destYend);
           ctx.closePath();
           ctx.clip();
           
-          ctx.drawImage(img, startX - rowHeight, -(img.height + rowHeight) / 2, img.width, img.height);
+          ctx.drawImage(img, srcXstart, srcYstart, srcWidth, srcHeight, destXstart, destYstart, destWidth, destHeight);
           ctx.restore();
           
           if (i < pack.levels.length - 1) {
             ctx.strokeStyle = 'white';
             ctx.lineWidth = 10;
             ctx.beginPath();
-            ctx.moveTo(endX + rowHeight, startY);
-            ctx.lineTo(endX, endY);
+            ctx.moveTo(destXend + rowHeight, destYstart);
+            ctx.lineTo(destXend, destYend);
             ctx.stroke();
           }
         }
         
-        const buffer = canvas.toBuffer('image/png');
-        fs.writeFileSync(packPath, buffer);
+        const fullBuffer = canvas.toBuffer('image/png');
+        const cropTop = (canvasHeight - CARD_HEIGHT) / 2;
+
+        const croppedBuffer = await sharp(fullBuffer)
+          .extract({ left: 0, top: cropTop, width: canvasWidth, height: CARD_HEIGHT })
+          .toBuffer();
+
+        fs.writeFileSync(packPath, croppedBuffer);
         console.log(`Saved pack thumbnail for pack ${pack.id}`);
         
-        await sleep(SLEEP_TIME);
       }
     }
   }
