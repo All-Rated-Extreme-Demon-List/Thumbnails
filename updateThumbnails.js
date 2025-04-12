@@ -43,7 +43,8 @@ function sleep(ms) {
         console.error(`Failed to fetch image for level ${levelId}`);
         continue;
       }
-      const buffer = await imgResponse.buffer();
+      const arrayBuffer = await imgResponse.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
       
       if (!fs.existsSync(fullPath)) {
         fs.writeFileSync(fullPath, buffer);
