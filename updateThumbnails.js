@@ -4,7 +4,9 @@ const sharp = require('sharp');
 const { createCanvas, loadImage } = require('canvas');
 
 const LEVELS_API_URL = 'https://api.aredl.net/v2/api/aredl/levels';
+const PLAT_LEVELS_API_URL = 'https://api.aredl.net/v2/api/arepl/levels';
 const PACKS_API_URL = 'https://api.aredl.net/v2/api/aredl/pack-tiers?v=thumbnails';
+const PLAT_PACKS_API_URL = 'https://api.aredl.net/v2/api/arepl/pack-tiers?v=thumbnails';
 const THUMB_BASE_URL = 'https://raw.githubusercontent.com/cdc-sys/level-thumbnails/main/thumbs/';
 const LEVELS_FULL_DIR = path.join(__dirname, 'levels', 'full');
 const LEVELS_CARDS_DIR = path.join(__dirname, 'levels', 'cards');
@@ -24,6 +26,11 @@ function sleep(ms) {
     console.log("Fetching levels...");
     const response = await fetch(LEVELS_API_URL);
     const levels = await response.json();
+
+    const platResponse = await fetch(PLAT_LEVELS_API_URL);
+    const platLevels = await platResponse.json();
+
+    levels.push(...platLevels);
     
     for (const level of levels) {
       const levelId = level.level_id;
@@ -74,6 +81,10 @@ function sleep(ms) {
     const response = await fetch(PACKS_API_URL);
     const pack_tiers = await response.json();
 
+    const platResponse = await fetch(PLAT_PACKS_API_URL);
+    const platPackTiers = await platResponse.json();
+
+    pack_tiers.push(...platPackTiers);
     
     for (const tier of pack_tiers) {
       for (const pack of tier.packs) {
