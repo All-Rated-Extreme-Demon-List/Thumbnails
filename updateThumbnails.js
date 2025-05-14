@@ -75,7 +75,17 @@ function sleep(ms) {
   }
   
   async function processPacks() {
-    if (!fs.existsSync(PACKS_DIR)) fs.mkdirSync(PACKS_DIR, { recursive: true });
+    if (fs.existsSync(PACKS_DIR)) {
+      fs.readdirSync(PACKS_DIR).forEach(file => {
+        const filePath = path.join(PACKS_DIR, file);
+        if (fs.lstatSync(filePath).isFile()) {
+          fs.unlinkSync(filePath);
+        }
+      });
+    } else {
+      fs.mkdirSync(PACKS_DIR, { recursive: true });
+    }
+
     
     console.log("Fetching packs...");
     const response = await fetch(PACKS_API_URL);
