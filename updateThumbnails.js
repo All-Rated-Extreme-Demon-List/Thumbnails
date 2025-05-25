@@ -7,7 +7,7 @@ const LEVELS_API_URL = 'https://api.aredl.net/v2/api/aredl/levels';
 const PLAT_LEVELS_API_URL = 'https://api.aredl.net/v2/api/arepl/levels';
 const PACKS_API_URL = 'https://api.aredl.net/v2/api/aredl/pack-tiers?v=thumbnails';
 const PLAT_PACKS_API_URL = 'https://api.aredl.net/v2/api/arepl/pack-tiers?v=thumbnails';
-const THUMB_BASE_URL = 'https://raw.githubusercontent.com/cdc-sys/level-thumbnails/main/thumbs/';
+const THUMB_BASE_URL = 'https://tjcsucht.net/levelthumbs/';
 const LEVELS_FULL_DIR = path.join(__dirname, 'levels', 'full');
 const LEVELS_CARDS_DIR = path.join(__dirname, 'levels', 'cards');
 const PACKS_DIR = path.join(__dirname, 'packs');
