@@ -34,8 +34,8 @@ function sleep(ms) {
     
     for (const level of levels) {
       const levelId = level.level_id;
-      const fullPath = path.join(LEVELS_FULL_DIR, `${levelId}.png`);
-      const cardPath = path.join(LEVELS_CARDS_DIR, `${levelId}.png`);
+      const fullPath = path.join(LEVELS_FULL_DIR, `${levelId}.webp`);
+      const cardPath = path.join(LEVELS_CARDS_DIR, `${levelId}.webp`);
       
       if (fs.existsSync(fullPath) && fs.existsSync(cardPath)) {
         console.log(`Level ${levelId} already processed, skipping.`);
@@ -54,7 +54,11 @@ function sleep(ms) {
       const buffer = Buffer.from(arrayBuffer);
       
       if (!fs.existsSync(fullPath)) {
-        fs.writeFileSync(fullPath, buffer);
+        const compressedWebp = await sharp(buffer)
+          .webp({ quality: 50 })
+          .toBuffer();
+
+        fs.writeFileSync(fullPath, compressedWebp);
         console.log(`Saved full thumbnail for level ${levelId}`);
       }
       
@@ -65,6 +69,7 @@ function sleep(ms) {
         const top = Math.floor((metadata.height - cropHeight) / 2);
         const croppedBuffer = await image
           .extract({ left: 0, top: top, width: metadata.width, height: cropHeight })
+          .webp({ quality: 70 })
           .toBuffer();
         fs.writeFileSync(cardPath, croppedBuffer);
         console.log(`Saved card thumbnail for level ${levelId}`);
@@ -103,7 +108,7 @@ function sleep(ms) {
           continue;
         }
         
-        const packPath = path.join(PACKS_DIR, `${pack.id}.png`);
+        const packPath = path.join(PACKS_DIR, `${pack.id}.webp`);
         console.log(`Processing pack ${pack.id}...`);
         pack.levels.sort((a, b) => a.position - b.position);
         
@@ -158,17 +163,30 @@ function sleep(ms) {
         
         for (let i = 0; i < pack.levels.length; i++) {
           const level = pack.levels[i];
-          const thumbnailPath = path.join(LEVELS_FULL_DIR, `${level.level_id}.png`);
+          const thumbnailPath = path.join(LEVELS_FULL_DIR, `${level.level_id}.webp`);
           let img;
           try {
-            if (fs.existsSync(thumbnailPath)) {
-              img = await loadImage(thumbnailPath);
-            } else {
+            
+            
               const thumbnailUrl = `${THUMB_BASE_URL}/${level.level_id}.png`;
               img = await loadImage(thumbnailUrl);
-            }
+            
           } catch (error) {
             console.warn(`Failed to load thumbnail for level ${level.level_id} in pack ${pack.id}:`, error);
+            console.warn(`Attempting to load from local path: ${thumbnailPath}`);
+            if (fs.existsSync(thumbnailPath)) {
+              try {
+                const webpBuffer = fs.readFileSync(thumbnailPath);
+                const pngBuffer = await sharp(webpBuffer).png().toBuffer();
+                img = await loadImage(pngBuffer);
+              } catch (err) {
+                console.warn(`Failed to load local thumbnail for level ${level.level_id} in pack ${pack.id}:`, err);
+                continue;
+              }
+            } else {
+              console.warn(`Thumbnail file not found for level ${level.level_id} in pack ${pack.id}`);
+              continue;
+            }
             continue;
           }
 
@@ -213,6 +231,7 @@ function sleep(ms) {
 
         const croppedBuffer = await sharp(fullBuffer)
           .extract({ left: 0, top: cropTop, width: canvasWidth, height: CARD_HEIGHT })
+          .webp({ quality: 70 })
           .toBuffer();
 
         fs.writeFileSync(packPath, croppedBuffer);
