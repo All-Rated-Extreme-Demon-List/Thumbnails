@@ -42,7 +42,28 @@
         processed++;
         return;
       }
-      const buffer = Buffer.from(await (await fetch(`${THUMB_BASE_URL}/${levelId}.png`)).arrayBuffer());
+
+      const thumbUrl = `${THUMB_BASE_URL}/${levelId}.png`;
+      let response;
+      try {
+        response = await fetch(thumbUrl, { method: 'HEAD' });
+      } catch (err) {
+        console.warn(`Error checking existence of remote thumbnail for level ${levelId}:`, err);
+      }
+
+      if (!response || !response.ok) {
+        console.warn(`Remote thumbnail not found for level ${levelId}, skipping.`);
+        processed++;
+        return;
+      }
+
+      const fetchResp = await fetch(thumbUrl);
+      if (!fetchResp.ok) {
+        console.warn(`Failed to fetch remote thumbnail for level ${levelId}, status ${fetchResp.status}`);
+        processed++;
+        return;
+      }
+      buffer = Buffer.from(await fetchResp.arrayBuffer());
 
       if (!fs.existsSync(fullPath)) {
         const webp = await sharp(buffer).webp({ quality: 50 }).toBuffer();
