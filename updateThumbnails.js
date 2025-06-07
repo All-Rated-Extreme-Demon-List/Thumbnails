@@ -44,26 +44,23 @@
       }
 
       const thumbUrl = `${THUMB_BASE_URL}/${levelId}.png`;
-      let response;
+
+      
       try {
-        response = await fetch(thumbUrl, { method: 'HEAD' });
-      } catch (err) {
-        console.warn(`Error checking existence of remote thumbnail for level ${levelId}:`, err);
-      }
-
-      if (!response || !response.ok) {
-        console.warn(`Remote thumbnail not found for level ${levelId}, skipping.`);
+        const fetchResp = await fetch(thumbUrl);
+        if (!fetchResp.ok) {
+          if (fetchResp.status === 404) console.warn(`Remote thumbnail not found for level ${levelId}, skipping.`);
+          else console.warn(`Failed to fetch remote thumbnail for level ${levelId}, status ${fetchResp.status}`);
+          
+          processed++;
+          return;
+        } 
+      } catch (error) {
+        console.warn(`Error fetching remote thumbnail for level ${levelId}:`, error);
         processed++;
         return;
       }
-
-      const fetchResp = await fetch(thumbUrl);
-      if (!fetchResp.ok) {
-        console.warn(`Failed to fetch remote thumbnail for level ${levelId}, status ${fetchResp.status}`);
-        processed++;
-        return;
-      }
-      buffer = Buffer.from(await fetchResp.arrayBuffer());
+        buffer = Buffer.from(await fetchResp.arrayBuffer());
 
       if (!fs.existsSync(fullPath)) {
         const webp = await sharp(buffer).webp({ quality: 50 }).toBuffer();
@@ -185,30 +182,20 @@
             const thumbnailPath = path.join(LEVELS_FULL_DIR, `${level.level_id}.webp`);
             let img;
             try {
-              
-              
-                const thumbnailUrl = `${THUMB_BASE_URL}/${level.level_id}.png`;
-                img = await loadImage(thumbnailUrl);
-              
-            } catch (error) {
-              console.warn(`Failed to load thumbnail for level ${level.level_id} in pack ${pack.id}:`, error);
-              console.warn(`Attempting to load from local path: ${thumbnailPath}`);
-              if (fs.existsSync(thumbnailPath)) {
+                const webpBuffer = fs.readFileSync(thumbnailPath);
+                const pngBuffer = await sharp(webpBuffer).png().toBuffer();
+                img = await loadImage(pngBuffer);
+            } catch (err) {
+                console.warn(`Failed to load local thumbnail for level ${level.level_id} in pack ${pack.id}:`, err);
                 try {
-                  const webpBuffer = fs.readFileSync(thumbnailPath);
-                  const pngBuffer = await sharp(webpBuffer).png().toBuffer();
-                  img = await loadImage(pngBuffer);
-                } catch (err) {
-                  console.warn(`Failed to load local thumbnail for level ${level.level_id} in pack ${pack.id}:`, err);
-                  continue;
+                    const thumbnailUrl = `${THUMB_BASE_URL}/${level.level_id}.png`;
+                    console.warn(`Attempting to load from remote: ${thumbnailUrl}`);
+                    img = await loadImage(thumbnailUrl);
+                } catch (error) {
+                    console.warn(`Failed to load thumbnail for level ${level.level_id} in pack ${pack.id}:`, error);
+                    continue;
                 }
-              } else {
-                console.warn(`Thumbnail file not found for level ${level.level_id} in pack ${pack.id}`);
-                continue;
-              }
-              continue;
             }
-
             const destXstart = i * thumbnailWidth;
             const destXend = destXstart + thumbnailWidth;
             const destYstart = 0;
