@@ -9,7 +9,7 @@
   const PLAT_LEVELS_API_URL = 'https://api.aredl.net/v2/api/arepl/levels';
   const PACKS_API_URL = 'https://api.aredl.net/v2/api/aredl/pack-tiers?v=thumbnails';
   const PLAT_PACKS_API_URL = 'https://api.aredl.net/v2/api/arepl/pack-tiers?v=thumbnails';
-  const THUMB_BASE_URL = 'https://tjcsucht.net/levelthumbs/';
+  const THUMB_BASE_URL = 'https://levelthumbs.prevter.me/thumbnail';
   const LEVELS_FULL_DIR = path.join(__dirname, 'levels', 'full');
   const LEVELS_CARDS_DIR = path.join(__dirname, 'levels', 'cards');
   const PACKS_DIR = path.join(__dirname, 'packs');
@@ -43,7 +43,7 @@
         return;
       }
 
-      const thumbUrl = `${THUMB_BASE_URL}/${levelId}.png`;
+      const thumbUrl = `${THUMB_BASE_URL}/${levelId}/high`;
 
       let fetchResp;
       try {
