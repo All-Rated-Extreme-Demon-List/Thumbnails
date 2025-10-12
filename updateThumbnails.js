@@ -59,7 +59,7 @@
         processed++;
         return;
       }
-      buffer = Buffer.from(await fetchResp.arrayBuffer());
+      const buffer = Buffer.from(await fetchResp.arrayBuffer());
 
       if (!fs.existsSync(fullPath)) {
         const webp = await sharp(buffer).webp({ quality: 50 }).toBuffer();
