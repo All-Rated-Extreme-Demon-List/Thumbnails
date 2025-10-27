@@ -1,36 +1,39 @@
 name: Update Thumbnails
 
 on:
-  schedule:
-    - cron: "0 */3 * * *"
-  workflow_dispatch:
+    schedule:
+        - cron: '0 */3 * * *'
+    workflow_dispatch:
 
 jobs:
-  update-thumbnails:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v3
+    update-thumbnails:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout Repo
+              uses: actions/checkout@v3
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '22'
+            - name: Setup Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: '22'
 
-      - name: Install Dependencies
-        run: npm install
+            - name: Install Dependencies
+              run: yarn
 
-      - name: Run Thumbnail Update Script
-        run: npm run update
+            - name: Build TS Files
+              run: yarn tsc
 
-      - name: Commit and Push Changes
-        run: |
-          git config --global user.name "GitHub Action"
-          git config --global user.email "action@github.com"
-          git add .
-          if git diff-index --quiet HEAD; then
-            echo "No changes to commit"
-          else
-            git commit -m "Update cropped thumbnails [skip ci]"
-            git push
-          fi
+            - name: Run Thumbnail Update Script
+              run: node .
+
+            - name: Commit and Push Changes
+              run: |
+                  git config --global user.name "GitHub Action"
+                  git config --global user.email "action@github.com"
+                  git add .
+                  if git diff-index --quiet HEAD; then
+                    echo "No changes to commit"
+                  else
+                    git commit -m "Update cropped thumbnails [skip ci]"
+                    git push
+                  fi
