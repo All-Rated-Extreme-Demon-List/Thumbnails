@@ -35,6 +35,7 @@ async function processLevelsThumbnails() {
 
     const totalLevels = levels.length;
     let processedCount = 0;
+    const erroredLevels: BaseLevel[] = [];
     const limit = pLimit(CONCURRENT_LIMIT);
 
     const tasks = levels.map((level) =>
@@ -97,6 +98,7 @@ async function processLevelsThumbnails() {
                             `Failed to fetch remote thumbnail for level ${levelId}:`,
                             error,
                         );
+                    erroredLevels.push(level);
                     processedCount++;
                     return;
                 }
@@ -109,6 +111,15 @@ async function processLevelsThumbnails() {
                 try {
                     sourceImageBuffer = fs.readFileSync(fullOutputPath);
                 } catch {}
+            }
+
+            if (!sourceImageBuffer) {
+                erroredLevels.push(level);
+                console.warn(
+                    `No source image available for level ${levelId}, skipping.`,
+                );
+                processedCount++;
+                return;
             }
 
             // create card version (center-cropped to CARD_HEIGHT)
@@ -157,6 +168,12 @@ async function processLevelsThumbnails() {
     );
 
     await Promise.all(tasks);
+    console.log('All level thumbnails processed.');
+    if (erroredLevels.length > 0) {
+        console.log(
+            `${erroredLevels.length} levels failed to process:\n${erroredLevels.map((level) => `${level.name} (${level.level_id})`).join('\n')}`,
+        );
+    }
 }
 
 export { processLevelsThumbnails };
